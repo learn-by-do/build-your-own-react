@@ -58,16 +58,35 @@ function commitWork(fiber) {
     return;
   }
 
-  const domParent = fiber.parent.dom;
+  let domParentFiber = fiber.parent;
+  while (!domParentFiber.dom) {
+    domParentFiber = domParentFiber.parent;
+  }
+
+  const domParent = domParentFiber.dom;
   if (fiber.effectTag === 'PLACEMENT' && fiber.dom !== null) {
     domParent.appendChild(fiber.dom);
   } else if (fiber.effectTag === 'UPDATE' && fiber.dom !== null) {
     updateDom(fiber.dom, fiber.alternate.props, fiber.props);
   } else if (fiber.effectTag === 'DELETION') {
-    domParent.removeChild(fiber.dom);
+    commitDeletion(fiber, domParent);
   }
   commitWork(fiber.child);
   commitWork(fiber.sibling);
+}
+
+/**
+ * 删除 fiber -> 渲染 DOM
+ *
+ * @param {*} fiber
+ * @param {*} domParent
+ */
+function commitDeletion(fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom);
+  } else {
+    commitDeletion(fiber.child, domParent);
+  }
 }
 
 /**
@@ -114,14 +133,13 @@ requestIdleCallback(workLoop);
  * @param {*} fiber
  */
 function performUnitOfWork(fiber) {
-  // add dom node
-  if (!fiber.dom) {
-    fiber.dom = createDom(fiber);
+  // Function Component 没有 DOM 节点
+  const isFunctionComponent = fiber.type instanceof Function;
+  if (isFunctionComponent) {
+    updateFunctionComponent(fiber);
+  } else {
+    updateHostComponent(fiber);
   }
-
-  // create new fiber from children
-  const { children } = fiber.props;
-  reconcileChildren(fiber, children);
 
   // return next unit of work
   if (fiber.child) {
@@ -134,6 +152,32 @@ function performUnitOfWork(fiber) {
     }
     nextFiber = nextFiber.parent;
   }
+}
+
+/**
+ * 函数式组件处理
+ *
+ * @param {*} fiber
+ */
+function updateFunctionComponent(fiber) {
+  const children = [fiber.type(fiber.props)];
+  reconcileChildren(fiber, children);
+}
+
+/**
+ * 普通 HTML 元素组件
+ *
+ * @param {*} fiber
+ */
+function updateHostComponent(fiber) {
+  // add dom node
+  if (!fiber.dom) {
+    fiber.dom = createDom(fiber);
+  }
+
+  // create new fiber from children
+  const { children } = fiber.props;
+  reconcileChildren(fiber, children);
 }
 
 /**

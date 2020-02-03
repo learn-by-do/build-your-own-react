@@ -7,14 +7,17 @@ const updateValue = e => {
   reRender(e.target.value);
 };
 
-const reRender = value => {
-  const element = (
+function App({value}) {
+  return (
     <div>
       <input onInput={updateValue} value={value} />
       <h2>Hello {value}</h2>
     </div>
   );
-  React.render(element, container);
+}
+
+const reRender = value => {
+  React.render(<App value={value} />, container);
 };
 
 reRender('World');
