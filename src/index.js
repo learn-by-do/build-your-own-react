@@ -3,21 +3,15 @@ import React from './react';
 // 告诉 babel 使用自定义的 React.createElement 来转译 jsx
 /** @jsx React.createElement */
 const container = document.getElementById('root');
-const updateValue = e => {
-  reRender(e.target.value);
-};
 
-function App({value}) {
+function Counter() {
+  const [count, setCount] = React.useState(1);
   return (
     <div>
-      <input onInput={updateValue} value={value} />
-      <h2>Hello {value}</h2>
+      <button onClick={() => setCount(c => c + 1)}>click to add 1</button>
+      <h2>Count: {count}</h2>
     </div>
   );
 }
 
-const reRender = value => {
-  React.render(<App value={value} />, container);
-};
-
-reRender('World');
+React.render(<Counter />, container);

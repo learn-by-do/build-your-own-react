@@ -1,9 +1,10 @@
 import createElement from './create-element';
-import render from './render';
+import render, { useState } from './render';
 
 const React = {
   createElement,
-  render
+  render,
+  useState
 };
 
 export default React;
